@@ -1,15 +1,9 @@
--- EDA
-
--- Here we are jsut going to explore the data and find trends or patterns or anything interesting like outliers
-
--- normally when you start the EDA process you have some idea of what you're looking for
-
--- with this info we are just going to look around and see what we find!
+-- SQL-код выполняет Exploratory Data Analysis (EDA) (разведочный анализ данных) на данных о массовых увольнениях 
 
 SELECT * 
 FROM world_layoffs.layoffs_staging2;
 
--- EASIER QUERIES
+-- БОЛЕЕ ПРОСТЫЕ ЗАПРОСЫ
 
 SELECT MAX(total_laid_off)
 FROM world_layoffs.layoffs_staging2;
@@ -19,50 +13,38 @@ FROM world_layoffs.layoffs_staging2;
 
 
 
--- Looking at Percentage to see how big these layoffs were
+-- Посмотрите процент, чтобы увидеть, насколько масштабными были эти увольнения.
+
 SELECT MAX(percentage_laid_off),  MIN(percentage_laid_off)
 FROM world_layoffs.layoffs_staging2
 WHERE  percentage_laid_off IS NOT NULL;
 
--- Which companies had 1 which is basically 100 percent of they company laid off
+-- В каких компаниях было уволено 1, что по сути означает 100 процентов сотрудников компании?
+
 SELECT *
 FROM world_layoffs.layoffs_staging2
 WHERE  percentage_laid_off = 1;
--- these are mostly startups it looks like who all went out of business during this time
+--в основном это стартапы, которые все за это время обанкротились
 
--- if we order by funcs_raised_millions we can see how big some of these companies were
+-- если мы отсортируем по funcs_raised_millions, то увидим, насколько большими были некоторые из этих компаний
 SELECT *
 FROM world_layoffs.layoffs_staging2
 WHERE  percentage_laid_off = 1
 ORDER BY funds_raised_millions DESC;
--- BritishVolt looks like an EV company, Quibi! I recognize that company - wow raised like 2 billion dollars and went under - ouch
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
--- SOMEWHAT TOUGHER AND MOSTLY USING GROUP BY--------------------------------------------------------------------------------------------------
-
--- Companies with the biggest single Layoff
+-- Компании с крупнейшими единовременными увольнениями
 
 SELECT company, total_laid_off
 FROM world_layoffs.layoffs_staging
 ORDER BY 2 DESC
 LIMIT 5;
--- now that's just on a single day
 
--- Companies with the most Total Layoffs
+-- и все это в одно время
+
+-- Компании с наибольшим общим количеством увольнений
+
 SELECT company, SUM(total_laid_off)
 FROM world_layoffs.layoffs_staging2
 GROUP BY company
@@ -72,13 +54,14 @@ LIMIT 10;
 
 
 -- by location
+
 SELECT location, SUM(total_laid_off)
 FROM world_layoffs.layoffs_staging2
 GROUP BY location
 ORDER BY 2 DESC
 LIMIT 10;
 
--- this it total in the past 3 years or in the dataset
+--  за последние 3 года 
 
 SELECT country, SUM(total_laid_off)
 FROM world_layoffs.layoffs_staging2
@@ -107,10 +90,7 @@ ORDER BY 2 DESC;
 
 
 
--- TOUGHER QUERIES------------------------------------------------------------------------------------------------------------------------------------
-
--- Earlier we looked at Companies with the most Layoffs. Now let's look at that per year. It's a little more difficult.
--- I want to look at 
+-- Ранее мы рассматривали компании с наибольшим количеством увольнений. Теперь давайте посмотрим на это по годам. 
 
 WITH Company_Year AS 
 (
@@ -131,13 +111,14 @@ ORDER BY years ASC, total_laid_off DESC;
 
 
 
--- Rolling Total of Layoffs Per Month
+-- Общее количество увольнений за месяц
+
 SELECT SUBSTRING(date,1,7) as dates, SUM(total_laid_off) AS total_laid_off
 FROM layoffs_staging2
 GROUP BY dates
 ORDER BY dates ASC;
 
--- now use it in a CTE so we can query off of it
+-- теперь используем его в CTE, чтобы мы могли делать из него запросы
 WITH DATE_CTE AS 
 (
 SELECT SUBSTRING(date,1,7) as dates, SUM(total_laid_off) AS total_laid_off
